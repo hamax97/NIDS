@@ -1,27 +1,34 @@
 import pandas as pd
 import threading
+from numba import cuda
 
 df = pd.read_csv('../dataset/kddcup.data_10_percent_names')
 
 def change_value(first_index, last_index, column, unique_values):
-    print('From:', first_index, 'to:', last_index)
-#    for index in range(first_index, last_index):
-    for index in range(10):
+
+    print('In column:', column, 'indexes', first_index, last_index)
+
+    for index in range(first_index, last_index):
         for i in range(len(unique_values)):
-            if(df[column][index] == unique_values[i]):
-                print('Value:', df[column][index], 'equals to:', unique_values[i])
-                #df.at[index, column] = i
+            if(df.iloc[index][column] == unique_values[i]):
+                df.set_value(index, column, i)
                 break
 
+@cuda.jit
 def encode(column):
 
+    tx = cuda.threadIdx.x
+    ty = cuda.blockIdx.x
+
+    block_size = cuda.blockDim.x
+    grid_size = cuda.gridDim.x
+    
     unique_values = df[column].value_counts().index.tolist()
 
     num_rows = 494021
-    available_cores = 36 - 3 # 3: number of columns to encode
+    available_cores = 72 - 3 # 3: number of columns to encode
 
     threads_per_row = int(available_cores / 3) # 3: number of columns to encode
-    threads_list = list() # List to start and join the created threads
     rows_per_thread = int(num_rows / threads_per_row)
     missing_rows = int(num_rows % threads_per_row)
 
@@ -30,35 +37,20 @@ def encode(column):
 
     for i in range(threads_per_row):
 
-        thr = threading.Thread(target=change_value,
-                               args=(first_index, last_index, column, unique_values))
-#        thr = threading.Thread(target=hello)
+        
+
         first_index = last_index
         last_index += rows_per_thread
 
-        threads_list.append(thr)
-        thr.start()
-
-    for thr in threads_list:
-        thr.join()
-
     # Change column type
-#    df[column] = df[column].astype('int')
+    df[column] = df[column].astype('int')
 
-def hello():
-    print('Hello')
 
+# Main part of the script
 if __name__ == '__main__':
 
     columns = ['protocol_type', 'service', 'flag']
-    column_threads = list()
-
     for col in columns:
-        thr = threading.Thread(target=encode, args=(col,))
-        column_threads.append(thr)
-        thr.start()
+        encode(col)
 
-    for thr in column_threads:
-        thr.join()
-
-#    df.to_csv('finalized.csv')
+    df.to_csv('finalized.csv')
