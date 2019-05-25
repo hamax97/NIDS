@@ -50,19 +50,19 @@ read_csv(csv_properties& csv_properties,
       // - 'attack_type' -> column 41
       switch (i) {
       case 1:
-	exists(unique_values[i], matrix[row][i], uv_pt_index);
+	exists(unique_values[0], matrix[row][i], uv_pt_index);
 	break;
 
       case 2:
-	exists(unique_values[i], matrix[row][i], uv_svc_index);
+	exists(unique_values[1], matrix[row][i], uv_svc_index);
 	break;
 
       case 3:
-	exists(unique_values[i], matrix[row][i], uv_flag_index);
+	exists(unique_values[2], matrix[row][i], uv_flag_index);
 	break;
 
       case 41:
-	exists(unique_values[i], matrix[row][i], uv_at_index);
+	exists(unique_values[3], matrix[row][i], uv_at_index);
 	break;
 
 	//      default:
@@ -73,8 +73,6 @@ read_csv(csv_properties& csv_properties,
     ++row;
   }
 
-  std::cout << "here";
-
   csv_file.close();
 
   return matrix;
@@ -83,8 +81,9 @@ read_csv(csv_properties& csv_properties,
 void
 exists(std::map<std::string, int>& unique_values,
        const std::string key, int& index) {
+
   // 1 if the key exists
-  if (!unique_values.count(key)) {
+  if (unique_values.count(key) == 0) {
     // mark as existent and assign an index that works as an id.
     unique_values[key] = index;
     ++index;

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DATASET_DIR=../dataset
+DATASET_DIR=../../dataset
 
 if [ ! -d "$DATASET_DIR" ]; then
     # Dataset dir
