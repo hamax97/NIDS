@@ -1,6 +1,13 @@
 #include <string>
 #include <map>
 
+#define COLUMNS_TO_ENCODE 4
+// Column numbers in matrix
+#define PROTOCOL_TYPE 1
+#define SERVICE 2
+#define FLAG 3
+#define ATTACK_TYPE 41
+
 /**
  * Arguments that will be passed to the thread function
  */

@@ -7,52 +7,92 @@
 #include "csv.h"
 #include "data_preparation.h"
 
-#define COLUMNS_TO_ENCODE 4
-#define PROTOCOL_TYPE 1
-#define SERVICE 2
-#define FLAG 3
-#define ATTACK_TYPE 41
+/**
+ * Reads the command line passed arguments.
+*/
+void read_command_line_options(int argc, char** argv);
+
+/**
+ * Creates threads and calls a encode function in each one.
+ */
+void encode_dataset();
+
+// Unique strings values in each column that will be encoded.
+std::map<std::string, int> unique_values[COLUMNS_TO_ENCODE];
+std::string **matrix; // CSV matrix representation.
+csv_properties csv; // CSV file properties.
+std::string output_csv;
 
 int
 main(int argc, char *argv[]) {
 
-  if (argc < 6) {
-    std::cerr << "Usage:\n$ " << argv[0] << " file.csv [-h] -l <integer> -c <integer>\n"
-	      << "\t-h: Indicates that the .csv file contains column names\n"
+  if (argc < 9) {
+    std::cerr << "Usage:\n$ " << argv[0]
+              << " -f /path/to/file.csv [-h] -l <integer> -c <integer> "
+              << " -o /path/to/output.csv\n"
+	      << "\t-h: Indicates that the .csv file contains a header\n"
       	      << "\t-l: Indicates the number of lines in the file. "
-	      << "If '-h' option present, 1 is substracted to this number\n"
+	      << "If '-h' option is present, 1 is substracted to this number\n"
 	      << "\t-c: Indicates the number of columns in the file.\n"
-              << "Note that the arguments must be in the same order presented above.\n";
+              << "\t-o: Indicates the output location for the modified csv\n";
     return EXIT_FAILURE;
   }
 
-  // CSV file properties
-  csv_properties csv;
-  csv.file = argv[1];
+  // Take command line arguments.
+  read_command_line_options(argc, argv);
 
-  if (strcmp(argv[2], "-h") == 0) csv.header = true;
-
-  if (csv.header) {
-    csv.num_lines = atoi(argv[4]);
-    csv.num_columns = atoi(argv[6]);
-  } else {
-    csv.num_lines = atoi(argv[3]);
-    csv.num_columns = atoi(argv[5]);
-  }
-
-  // Read file
-  std::string **matrix;
-  // unique strings values in each colum
-  std::map<std::string, int> unique_values[COLUMNS_TO_ENCODE];
+  // Read file.
   matrix = read_csv(csv, unique_values);
 
-  // Encode
+  // Encode.
+  encode_dataset();
+
+  // Write to CSV.
+  if (csv.has_header)
+    write_csv(matrix, csv.num_rows, csv.num_columns, output_csv, csv.header);
+  else
+    write_csv(matrix, csv.num_rows, csv.num_columns, output_csv);
+
+  // Free allocated space.
+  free_csv(csv, matrix);
+
+  pthread_exit(NULL);
+  //  return EXIT_SUCCESS;
+}
+
+void
+read_command_line_options(int argc, char** argv) {
+
+  int index = 1;
+  while (index < argc) {
+
+    if (strcmp(argv[index], "-f") == 0) {
+      csv.file = argv[index+1];
+      index += 2;
+    } else if (strcmp(argv[index], "-h") == 0) {
+      csv.has_header = true;
+      ++index;
+    } else if (strcmp(argv[index], "-l") == 0) {
+      csv.num_rows = atoi(argv[index+1]);
+      index += 2;
+    } else if (strcmp(argv[index], "-c") == 0) {
+      csv.num_columns = atoi(argv[index+1]);
+      index += 2;
+    } else if (strcmp(argv[index], "-o") == 0) {
+      output_csv = argv[index+1];
+      index += 2;
+    }
+  }
+}
+
+void
+encode_dataset() {
   pthread_t column_threads[COLUMNS_TO_ENCODE];
   arguments args[COLUMNS_TO_ENCODE];
   for (int thr = 0; thr < COLUMNS_TO_ENCODE; ++thr) {
 
     args[thr].matrix = matrix;
-    args[thr].num_rows = csv.num_lines;
+    args[thr].num_rows = csv.num_rows;
     args[thr].unique_values = unique_values[thr];
 
     switch (thr) {
@@ -78,7 +118,7 @@ main(int argc, char *argv[]) {
     if (status != 0){
       std::cerr << "Failed creating thread for column: "
                 << args[thr].column << " with status: " << status << std::endl;
-      return EXIT_FAILURE;
+      exit(EXIT_FAILURE);
     }
 
   }
@@ -89,13 +129,7 @@ main(int argc, char *argv[]) {
     if (status != 0) {
       std::cerr << "Failed joining thread with status: "
                 << status << std::endl;
-      return EXIT_FAILURE;
+      exit(EXIT_FAILURE);
     }
   }
-
-  // Free allocated space
-  free_csv(csv, matrix);
-
-  pthread_exit(NULL);
-  //  return EXIT_SUCCESS;
 }

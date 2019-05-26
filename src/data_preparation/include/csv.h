@@ -8,10 +8,19 @@
  */
 typedef struct {
   std::string file; // Filename.
-  bool header = false; // Has header?, that is, column names.
-  int num_lines;
+  bool has_header = false; // Has header?, that is, column names.
+  std::string header;
+  int num_rows;
   int num_columns;
 } csv_properties;
+
+/**
+ * Writes the content of 'matrix' into a csv file.
+ */
+void write_csv(std::string** matrix,
+               int num_rows, int num_columns,
+               std::string output_file,
+               std::string header = "");
 
 /**
  * Reads a csv file and returns a matrix containing the csv file contents.
@@ -23,10 +32,15 @@ std::string** read_csv(csv_properties& csv_properties,
  * Checks if a key is already in the hashmap 'unique values'.
  * If it is not already there, assign to it an index.
  */
-void exists(std::map<std::string, int>& unique_values,
-	    const std::string key, int& index);
+void key_exists(std::map<std::string, int>& unique_values,
+                const std::string key, int& index);
 
 /**
  * Frees the matrix that represents the csv
  */
 void free_csv(const csv_properties& csv, std::string **columns);
+
+/**
+ * Checks if a file exists.
+ */
+inline bool file_exists(const std::string& file);
