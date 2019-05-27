@@ -17,6 +17,11 @@ void read_command_line_options(int argc, char** argv);
  */
 void encode_dataset();
 
+/**
+ * Frees a matrix.
+ */
+inline void free_matrix(std::string** matrix, int num_rows);
+
 // Unique strings values in each column that will be encoded.
 std::map<std::string, int> unique_values[COLUMNS_TO_ENCODE];
 std::string **matrix; // CSV matrix representation.
@@ -29,12 +34,16 @@ main(int argc, char *argv[]) {
   if (argc < 9) {
     std::cerr << "Usage:\n$ " << argv[0]
               << " -f /path/to/file.csv [-h] -l <integer> -c <integer> "
+              << " -s <float>"
               << " -o /path/to/output.csv\n"
 	      << "\t-h: Indicates that the .csv file contains a header\n"
       	      << "\t-l: Indicates the number of lines in the file. "
 	      << "If '-h' option is present, 1 is substracted to this number\n"
 	      << "\t-c: Indicates the number of columns in the file.\n"
-              << "\t-o: Indicates the output location for the modified csv\n";
+              << "\t-o: Indicates the output location for the modified csv\n"
+              << "\t-s: Value between (0,1) that indicates the split "
+              << "for the test set. "
+              << "The validation set is 50% of the test set.\n";
     return EXIT_FAILURE;
   }
 
@@ -47,14 +56,35 @@ main(int argc, char *argv[]) {
   // Encode.
   encode_dataset();
 
+  // Create test and validation sets.
+  test_validation_sets sets = split_dataset(matrix,
+                                            csv.num_rows, csv.num_columns,
+                                            csv.split);
+
   // Write to CSV.
-  if (csv.has_header)
-    write_csv(matrix, csv.num_rows, csv.num_columns, output_csv, csv.header);
-  else
-    write_csv(matrix, csv.num_rows, csv.num_columns, output_csv);
+  if (csv.has_header){
+    write_csv(matrix, csv.num_rows, csv.num_columns, output_csv + ".csv",
+              csv.header);
+    write_csv(sets.test_matrix,
+              sets.test_matrix_rows, sets.test_matrix_columns,
+              output_csv + "_test_set.csv", csv.header);
+    write_csv(sets.valid_matrix,
+              sets.valid_matrix_rows, sets.valid_matrix_columns,
+              output_csv  + "_valid_set.csv", csv.header);
+  } else {
+    write_csv(matrix, csv.num_rows, csv.num_columns, output_csv + ".csv");
+    write_csv(sets.test_matrix,
+              sets.test_matrix_rows, sets.test_matrix_columns,
+              output_csv + "_test_set.csv");
+    write_csv(sets.valid_matrix,
+              sets.valid_matrix_rows, sets.valid_matrix_columns,
+              output_csv + "_valid_set.csv");
+  }
 
   // Free allocated space.
-  free_csv(csv, matrix);
+  // free_matrix(matrix, csv.num_rows); Ad-hoc solution, fix it!.
+  delete sets.test_matrix;
+  delete sets.valid_matrix;
 
   pthread_exit(NULL);
   //  return EXIT_SUCCESS;
@@ -80,6 +110,15 @@ read_command_line_options(int argc, char** argv) {
       index += 2;
     } else if (strcmp(argv[index], "-o") == 0) {
       output_csv = argv[index+1];
+      index += 2;
+
+      int str_size = output_csv.size();
+      if (str_size >= 5) // for example a.csv
+        if (output_csv.substr(str_size - 4, 4) == ".csv")
+          output_csv.erase(str_size - 4, 4);
+
+    } else if (strcmp(argv[index], "-s") == 0) {
+      csv.split = atof(argv[index+1]);
       index += 2;
     }
   }
@@ -132,4 +171,11 @@ encode_dataset() {
       exit(EXIT_FAILURE);
     }
   }
+}
+
+inline void
+free_matrix(std::string** matrix, int num_rows) {
+  for (int i = 0; i < num_rows; ++i)
+    delete [] matrix[i];
+  delete [] matrix;
 }

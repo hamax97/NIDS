@@ -23,14 +23,17 @@ write_csv(std::string** matrix,
   if (header != "") csv_out_file << header << "\n";
 
   for (int i = 0; i < num_rows; ++i) {
-    for (int j = 0; j < num_columns; ++j) {
-      csv_out_file << matrix[i][j];
 
-      if ((j + 1) != num_columns)
-        csv_out_file << ",";
+    if (matrix[i] != NULL) { // Ad-hoc solution, fix it!.
+      for (int j = 0; j < num_columns; ++j) {
+        csv_out_file << matrix[i][j];
 
+        if ((j + 1) != num_columns)
+          csv_out_file << ",";
+
+      }
+      csv_out_file << "\n";
     }
-    csv_out_file << "\n";
   }
 
   csv_out_file.close();
@@ -121,13 +124,6 @@ key_exists(std::map<std::string, int>& unique_values,
     unique_values[key] = index;
     ++index;
   }
-}
-
-void
-free_csv(const csv_properties& csv, std::string **matrix) {
-  for (int i = 0; i < csv.num_rows; ++i)
-    delete [] matrix[i];
-  delete [] matrix;
 }
 
 inline bool

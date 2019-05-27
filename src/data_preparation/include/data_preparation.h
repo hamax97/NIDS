@@ -7,6 +7,7 @@
 #define SERVICE 2
 #define FLAG 3
 #define ATTACK_TYPE 41
+#define BATCH_SIZE 100 // Number of rows that represent one connection.
 
 /**
  * Arguments that will be passed to the thread function
@@ -19,6 +20,25 @@ typedef struct {
 } arguments;
 
 /**
+ * Contains the starting and ending indexes of a batch in a dataset.
+*/
+typedef struct {
+  int start;
+  int end;
+  bool in_use = false;
+} indexes;
+
+typedef struct {
+  std::string** test_matrix;
+  int test_matrix_rows;
+  int test_matrix_columns;
+
+  std::string** valid_matrix;
+  int valid_matrix_rows;
+  int valid_matrix_columns;
+} test_validation_sets;
+
+/**
  * Thead intended function.
  * Encodes a column of strings into integers given its unique values.
  */
@@ -26,8 +46,35 @@ void*
 encode(void* args);
 
 /**
- * Encodes a column of strings into integers given its unique values.
+ * Groups in batches of 100 the dataset contained in 'matrix'. Those batches are
+ * then shuffled and assigned to a test and validation sets. These sets have
+ * the classes balanced. The number of batches assigned to these tests is
+ * calculated by 'split_percentage', 50% percent of these split is for the
+ * test set, and 50% for the validation set.
+*/
+test_validation_sets split_dataset(std::string** matrix,
+                                   const int num_rows,
+                                   const int num_columns,
+                                   const float split_percentage);
+
+/**
+ * Given a batch (start and end indexes) returns false if the batch represents
+ * a 'normal' or not-an-attack connection. Returns true in other case.
+*/
+bool batch_class(std::string** matrix, const indexes batch);
+
+/**
+ * Assigns a batch from the original dataset 'matrix' to a train or validation
+ * set.
  */
-void
-encode(std::string** matrix, const int num_rows, const int column,
-       std::map<std::string, int>& unique_values);
+void assign_batch(std::string** matrix,
+                  indexes* matrix_batches, const int num_batches,
+                  indexes* tv_batches, const int index, bool& last_class);
+
+/**
+ * Copies the specified batches of 'matrix' into a new contiguos matrix. This
+ * to ease writing to a .csv file.
+ */
+std::string** copy_matrix_batches(std::string** matrix,
+                                  const indexes* copy_batches,
+                                  const int num_batches);

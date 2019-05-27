@@ -12,6 +12,7 @@ typedef struct {
   std::string header;
   int num_rows;
   int num_columns;
+  float split;
 } csv_properties;
 
 /**
@@ -34,11 +35,6 @@ std::string** read_csv(csv_properties& csv_properties,
  */
 void key_exists(std::map<std::string, int>& unique_values,
                 const std::string key, int& index);
-
-/**
- * Frees the matrix that represents the csv
- */
-void free_csv(const csv_properties& csv, std::string **columns);
 
 /**
  * Checks if a file exists.
