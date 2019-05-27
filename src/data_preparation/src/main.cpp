@@ -31,7 +31,7 @@ std::string output_csv;
 int
 main(int argc, char *argv[]) {
 
-  if (argc < 9) {
+  if (argc < 11) {
     std::cerr << "Usage:\n$ " << argv[0]
               << " -f /path/to/file.csv [-h] -l <integer> -c <integer> "
               << " -s <float>"
