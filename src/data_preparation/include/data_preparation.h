@@ -8,6 +8,7 @@
 #define FLAG 3
 #define ATTACK_TYPE 41
 #define BATCH_SIZE 100 // Number of rows that represent one connection.
+#define NUM_CLASSES 23 // Number of different tcp connection types.
 
 /**
  * Arguments that will be passed to the thread function
@@ -58,10 +59,10 @@ test_validation_sets split_dataset(std::string** matrix,
                                    const float split_percentage);
 
 /**
- * Given a batch (start and end indexes) returns false if the batch represents
- * a 'normal' or not-an-attack connection. Returns true in other case.
+ * Given a batch (start and end indexes) returns the id of class that appears
+ * the most.
 */
-bool batch_class(std::string** matrix, const indexes batch);
+int batch_class(std::string** matrix, const indexes batch);
 
 /**
  * Assigns a batch from the original dataset 'matrix' to a train or validation
@@ -69,7 +70,7 @@ bool batch_class(std::string** matrix, const indexes batch);
  */
 void assign_batch(std::string** matrix,
                   indexes* matrix_batches, const int num_batches,
-                  indexes* tv_batches, const int index, bool& last_class);
+                  indexes* tv_batches, const int index, int& last_class);
 
 /**
  * Copies the specified batches of 'matrix' into a new contiguos matrix. This

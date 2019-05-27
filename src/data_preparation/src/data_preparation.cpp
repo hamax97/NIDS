@@ -11,23 +11,11 @@ encode(void* args) {
 
   arguments* data = (arguments*) args;
 
-  if (data->column == ATTACK_TYPE) {
-    for (int i = 0; i < data->num_rows; ++i) {
-      std::string key = data->matrix[i][ATTACK_TYPE];
+  for (int i = 0; i < data->num_rows; ++i) {
+    std::string key = data->matrix[i][data->column];
 
-      // If it is some type of attack.
-      if (data->unique_values[key] != 0)
-        data->matrix[i][ATTACK_TYPE] = "1"; // Mark as an attack.
-      else
-        data->matrix[i][ATTACK_TYPE] = "0";
-    }
-  } else {
-    for (int i = 0; i < data->num_rows; ++i) {
-      std::string key = data->matrix[i][data->column];
-
-      data->matrix[i][data->column] =
-        std::to_string(data->unique_values[key]);
-    }
+    data->matrix[i][data->column] =
+      std::to_string(data->unique_values[key]);
   }
 
   pthread_exit(NULL);
@@ -61,8 +49,8 @@ split_dataset(std::string** matrix,
     batches[i].end = batches[i-1].end + BATCH_SIZE;
   }
 
-  bool test_last_class = false; // Represents a batch's class.
-  bool valid_last_class = false;
+  int test_last_class = -1; // Represents a batch's class.
+  int valid_last_class = -1;
   for (int i = 0; i < test_set_size; ++i) {
     assign_batch(matrix, batches, num_batches,
                  test_batches, i, test_last_class);
@@ -85,26 +73,27 @@ split_dataset(std::string** matrix,
   return sets;
 }
 
-bool
+int
 batch_class(std::string** matrix, const indexes batch) {
 
-  int normal_connection_count, attack_connection_count;
+  int classes[NUM_CLASSES] = {0};
 
-  normal_connection_count = attack_connection_count = 0;
+  int max = 0;
   for (int row = batch.start; row < batch.end; ++row) {
-    if (matrix[row][ATTACK_TYPE] == "0")
-      ++normal_connection_count;
-    else
-      ++attack_connection_count;
+    int pos = std::stoi(matrix[row][ATTACK_TYPE]);
+    ++classes[pos];
+
+    if (classes[pos] > classes[max])
+      max = pos;
   }
 
-  return (normal_connection_count > attack_connection_count) ? false : true;
+  return max;
 }
 
 void
 assign_batch(std::string** matrix,
              indexes* matrix_batches, const int num_batches,
-             indexes* tv_batches, const int index, bool& last_class) {
+             indexes* tv_batches, const int index, int& last_class) {
 
   std::random_device r;
   std::mt19937 generator(r());
@@ -116,7 +105,10 @@ assign_batch(std::string** matrix,
       if (batch_class(matrix, matrix_batches[pos]) != last_class) {
         tv_batches[index] = matrix_batches[pos];
         matrix_batches[pos].in_use = true;
-        last_class = !last_class;
+
+        if ((last_class + 1) == NUM_CLASSES) last_class = 0;
+        else ++last_class;
+
         break;
       }
     }
