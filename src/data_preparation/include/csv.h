@@ -13,7 +13,7 @@ typedef struct {
   int num_rows;
   int num_columns;
   float split;
-  bool encode; // Indicates if the dataset have to be encoded.
+  bool encode = false; // Indicates if the dataset have to be encoded.
 } csv_properties;
 
 /**

@@ -44,7 +44,8 @@ main(int argc, char *argv[]) {
               << "for the test set. "
               << "The validation set is 50% of the test set.\n"
       	      << "\t-h: Indicates that the .csv file contains a header\n"
-	      << "\t-e: Whether or not to encode the string values\n";
+	      << "\t-e: Whether or not to encode the string values. "
+	      << "If not present defaults to false\n";
     return EXIT_FAILURE;
   }
 
