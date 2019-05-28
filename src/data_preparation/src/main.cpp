@@ -33,17 +33,18 @@ main(int argc, char *argv[]) {
 
   if (argc < 11) {
     std::cerr << "Usage:\n$ " << argv[0]
-              << " -f /path/to/file.csv [-h] -l <integer> -c <integer> "
+              << " -f /path/to/file.csv -l <integer> -c <integer> "
               << " -s <float>"
-              << " -o /path/to/output.csv\n"
-	      << "\t-h: Indicates that the .csv file contains a header\n"
+              << " -o /path/to/output.csv [-h] [-e]\n"
       	      << "\t-l: Indicates the number of lines in the file. "
 	      << "If '-h' option is present, 1 is substracted to this number\n"
 	      << "\t-c: Indicates the number of columns in the file.\n"
               << "\t-o: Indicates the output location for the modified csv\n"
               << "\t-s: Value between (0,1) that indicates the split "
               << "for the test set. "
-              << "The validation set is 50% of the test set.\n";
+              << "The validation set is 50% of the test set.\n"
+      	      << "\t-h: Indicates that the .csv file contains a header\n"
+	      << "\t-e: Whether or not to encode the string values\n";
     return EXIT_FAILURE;
   }
 
@@ -54,7 +55,9 @@ main(int argc, char *argv[]) {
   matrix = read_csv(csv, unique_values);
 
   // Encode.
-  encode_dataset();
+  if (csv.encode) {
+    encode_dataset();
+  }
 
   // Create test and validation sets.
   test_validation_sets sets = split_dataset(matrix,
@@ -99,9 +102,6 @@ read_command_line_options(int argc, char** argv) {
     if (strcmp(argv[index], "-f") == 0) {
       csv.file = argv[index+1];
       index += 2;
-    } else if (strcmp(argv[index], "-h") == 0) {
-      csv.has_header = true;
-      ++index;
     } else if (strcmp(argv[index], "-l") == 0) {
       csv.num_rows = atoi(argv[index+1]);
       index += 2;
@@ -120,6 +120,12 @@ read_command_line_options(int argc, char** argv) {
     } else if (strcmp(argv[index], "-s") == 0) {
       csv.split = atof(argv[index+1]);
       index += 2;
+    } else if (strcmp(argv[index], "-h") == 0) {
+      csv.has_header = true;
+      ++index;
+    } else if (strcmp(argv[index], "-e") == 0) {
+      csv.encode = true;
+      ++index;
     }
   }
 }

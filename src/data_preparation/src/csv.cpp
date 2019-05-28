@@ -68,9 +68,11 @@ read_csv(csv_properties& csv_properties,
     std::getline(csv_file, csv_properties.header); // read header
   }
 
-  int uv_pt_index, uv_svc_index, uv_flag_index, uv_at_index;
   matrix = new std::string*[csv_properties.num_rows];
-  uv_pt_index = uv_svc_index = uv_flag_index = uv_at_index = 0;
+  int uv_pt_index, uv_svc_index, uv_flag_index, uv_at_index;
+  if (csv_properties.encode) {
+    uv_pt_index = uv_svc_index = uv_flag_index = uv_at_index = 0;
+  }
   int row = 0;
   while (std::getline(csv_file, line)) {
 
@@ -82,27 +84,29 @@ read_csv(csv_properties& csv_properties,
     for (int i = 0; i < csv_properties.num_columns; ++i) {
       std::getline(values, matrix[row][i], ',');
 
-      // Only four columns will be encoded:
-      // - 'protocol_type' -> column 1
-      // - 'service' -> column 2
-      // - 'flag' -> column 3
-      // - 'attack_type' -> column 41
-      switch (i) {
-      case 1:
-	key_exists(unique_values[0], matrix[row][i], uv_pt_index);
-	break;
-
-      case 2:
-	key_exists(unique_values[1], matrix[row][i], uv_svc_index);
-	break;
-
-      case 3:
-	key_exists(unique_values[2], matrix[row][i], uv_flag_index);
-	break;
-
-      case 41:
-	key_exists(unique_values[3], matrix[row][i], uv_at_index);
-	break;
+      if (csv_properties.encode) {
+	// Only four columns will be encoded:
+	// - 'protocol_type' -> column 1
+	// - 'service' -> column 2
+	// - 'flag' -> column 3
+	// - 'attack_type' -> column 41
+	switch (i) {
+	case 1:
+	  key_exists(unique_values[0], matrix[row][i], uv_pt_index);
+	  break;
+	  
+	case 2:
+	  key_exists(unique_values[1], matrix[row][i], uv_svc_index);
+	  break;
+	  
+	case 3:
+	  key_exists(unique_values[2], matrix[row][i], uv_flag_index);
+	  break;
+	  
+	case 41:
+	  key_exists(unique_values[3], matrix[row][i], uv_at_index);
+	  break;
+	}
       }
     }
 
