@@ -41,7 +41,7 @@ split_dataset(std::string** matrix,
 
   // Give indexes to the baches jumping from 100 to 100.
   indexes batches[num_batches];
-  batches[0].start = 0;
+  batches[0].start = 1;
   batches[0].end = BATCH_SIZE;
 
   for (int i = 1; i < num_batches; ++i) {
@@ -80,6 +80,7 @@ batch_class(std::string** matrix, const indexes batch) {
 
   int max = 0;
   for (int row = batch.start; row < batch.end; ++row) {
+
     int pos = std::stoi(matrix[row][ATTACK_TYPE]);
     ++classes[pos];
 
